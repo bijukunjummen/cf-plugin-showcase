@@ -1,0 +1,88 @@
+buildscript {
+	ext {
+		springBootVersion = '1.4.0.RELEASE'
+		cfPluginVersion = '2.1.0.BUILD-SNAPSHOT'
+	}
+	repositories {
+		mavenLocal()
+		mavenCentral()
+//		maven { url "https://oss.sonatype.org/content/repositories/releases" }
+		maven { url "https://repo.spring.io/release" }
+		maven { url "https://repo.spring.io/snapshot" }
+		maven { url "https://repo.spring.io/milestone" }
+	}
+	dependencies {
+		classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+		classpath("org.cloudfoundry:cloudfoundry-gradle-plugin:${cfPluginVersion}")
+	}
+}
+
+apply plugin: 'java'
+apply plugin: 'eclipse'
+apply plugin: 'spring-boot'
+
+apply plugin: 'cf'
+
+
+cfConfig {
+	//CF Details
+	ccHost = "api.local.pcfdev.io"
+	ccUser = "admin"
+	ccPassword = "admin"
+	org = "pcfdev-org"
+	space = "pcfdev-space"
+
+	//App Details
+	name = "cf-plugin-showcase"
+	hostName = "cf-plugin-showcase"
+	filePath = "build/libs/cf-plugin-showcase-0.0.1-SNAPSHOT.jar"
+	path = ""
+	domain = "local.pcfdev.io"
+	instances = 1
+	memory = 512
+	timeout = 180
+
+	//Env and services
+	buildpack = "https://github.com/cloudfoundry/java-buildpack.git"
+//	buildpack = "java_buildpack"
+
+	environment = ["JAVA_OPTS": "-Djava.security.egd=file:/dev/./urandom", "SPRING_PROFILES_ACTIVE": "cloud"]
+//	services  = ["mydb"]
+}
+
+jar {
+	baseName = 'cf-plugin-showcase'
+	version = '0.0.1-SNAPSHOT'
+}
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+repositories {
+	maven {
+		url 'https://repo.spring.io/libs-milestone'
+	}
+	mavenCentral()
+}
+
+
+
+dependencies {
+	compile('org.springframework.boot:spring-boot-starter-actuator')
+	compile('org.springframework.boot:spring-boot-devtools')
+	compile('org.springframework.boot:spring-boot-starter-thymeleaf')
+	compile('org.springframework.boot:spring-boot-starter-web')
+	compile('com.google.guava:guava:19.0')
+	compile("org.webjars:bootstrap:3.3.6")
+	compile("org.webjars:jquery:2.2.3")
+	compile('nz.net.ultraq.thymeleaf:thymeleaf-layout-dialect')
+	testCompile('org.springframework.boot:spring-boot-starter-test')
+}
+
+
+task showAppUrls(dependsOn: "cf-get-app-detail") << {
+	print "${project.cfConfig.applicationDetail.urls}"
+}
+
+task wrapper(type: Wrapper) {
+	gradleVersion = '2.12'
+}
